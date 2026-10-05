@@ -1,0 +1,60 @@
+{
+ "event": "Hurricane Harvey",
+ "landfall": "2017-08-25",
+ "zone": "Coast (Houston)",
+ "panel": {
+  "zone_days": 5616,
+  "zones": [
+   "COAST",
+   "NCENT",
+   "SCENT"
+  ],
+  "r2": 0.986559881100387,
+  "start": "2012-10-03",
+  "end": "2017-11-28"
+ },
+ "first_week_after_landfall": {
+  "raw_drop_pct": -24.682712626629975,
+  "weather_adjusted_drop_pct": -15.080683745236083,
+  "share_of_raw_drop_explained_by_weather": 0.38901838005577805,
+  "mwh_lost_weather_adjusted": 322472.5667346056,
+  "mwh_lost_raw": 611328.074249061
+ },
+ "three_weeks": {
+  "avg_effect_pct": -8.969715808511117,
+  "mwh_lost": 584769.0307953553
+ },
+ "worst_day": {
+  "date": "2017-08-29",
+  "effect_pct": -21.38669839934283,
+  "lo_pct": -22.760267256078194,
+  "hi_pct": -19.988703106404635
+ },
+ "pre_trend": {
+  "mean_pct": 1.3456561392501034,
+  "max_abs_pct": 3.918372228848921,
+  "days_with_ci_excluding_zero": 2
+ },
+ "placebo_years_first_week_pct": {
+  "2013": -1.0028094083579029,
+  "2014": -0.6491209013666511,
+  "2015": -1.45454489792182,
+  "2016": -4.607730232947993
+ },
+ "synthetic_control": {
+  "first_week_gap_pct": -11.647307585202261,
+  "weights": {
+   "FWEST": 0.346,
+   "NORTH": 0.0,
+   "NCENT": 0.0,
+   "WEST": 0.014,
+   "EAST": 0.64
+  },
+  "pre_fit_mape": 2.805988074267862,
+  "holdout_week_gap_pct": 2.041310090646845
+ },
+ "weather_during_event": {
+  "mean_tmax_week_before": 34.617142857142866,
+  "mean_tmax_week_after": 27.950000000000028
+ }
+}
