@@ -17,7 +17,7 @@ aws s3 cp /tmp/grid_src.zip "s3://$BUCKET/code/src.zip"
 aws s3 cp aws/glue_job.py "s3://$BUCKET/code/glue_job.py"
 
 COMMAND="Name=pythonshell,PythonVersion=3.9,ScriptLocation=s3://$BUCKET/code/glue_job.py"
-ARGS="{\"--bucket\":\"$BUCKET\",\"--extra-py-files\":\"s3://$BUCKET/code/src.zip\",\"--additional-python-modules\":\"pandas==2.2.2,pyarrow==15.0.2,openpyxl==3.1.5\"}"
+ARGS="{\"--bucket\":\"$BUCKET\",\"--additional-python-modules\":\"pandas==2.2.2,pyarrow==15.0.2,openpyxl==3.1.5\"}"
 if aws glue get-job --job-name "$JOB" >/dev/null 2>&1; then
   aws glue update-job --job-name "$JOB" --job-update "Role=$ROLE,Command={$COMMAND},DefaultArguments=$ARGS,MaxCapacity=1.0"
 else

@@ -8,7 +8,7 @@
            s3://<bucket>/curated/quality/report.json
 
 Athena reads the curated prefix (see aws/athena/). Job arguments: --bucket, and optionally
---raw_prefix and --curated_prefix. The `src` package is shipped with --extra-py-files.
+--raw_prefix and --curated_prefix. The `src` package is read from s3://<bucket>/code/src.zip.
 """
 import argparse
 import io
@@ -20,7 +20,15 @@ from pathlib import Path
 import boto3
 import pandas as pd
 
-from src import config, etl, quality
+try:
+    from src import config, etl, quality
+except ModuleNotFoundError:
+    # Glue Python shell jobs only put .whl and .egg files on the path, so fetch the zipped
+    # `src` package from the bucket ourselves. Python can import straight from a zip.
+    _bucket = sys.argv[sys.argv.index("--bucket") + 1]
+    boto3.client("s3").download_file(_bucket, "code/src.zip", "/tmp/grid_src.zip")
+    sys.path.insert(0, "/tmp/grid_src.zip")
+    from src import config, etl, quality
 
 
 def download_raw(s3, bucket, prefix, dest):
