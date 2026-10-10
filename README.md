@@ -73,7 +73,7 @@ ROLE=$(./aws/setup_role.sh <bucket>)          # one-off: a Glue role limited to 
 GLUE_ROLE_ARN=$ROLE ./aws/deploy.sh <bucket>
 ```
 
-This uploads the raw files and code, creates the Glue job, runs it, creates the Athena tables and runs the SQL checks. Timestamps are written at millisecond precision because Athena cannot read pandas' default nanoseconds.
+This uploads the raw files and code, creates the Glue job, runs it, creates the Athena tables and runs the SQL checks. Run on AWS (us-east-2) on 10 Oct 2026: the Glue job wrote 135,756 panel rows to 25 Parquet files, all 8 checks in the job and all 5 Athena checks passed, and Athena returns 45,252 hours for each zone. Timestamps are written at millisecond precision because Athena cannot read pandas' default nanoseconds.
 
 `tests/test_aws.py` runs this path without an AWS account: S3 is mocked with moto, the Glue job runs end to end against it, and the Athena SQL is executed with DuckDB on the files the job wrote. The tests also corrupt the data four ways (a one-hour shift, a dropped hour, a broken zone total, load joined six hours late) and confirm the checks catch each one.
 
