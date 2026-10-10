@@ -19,7 +19,8 @@ aws s3 cp aws/glue_job.py "s3://$BUCKET/code/glue_job.py"
 COMMAND="Name=pythonshell,PythonVersion=3.9,ScriptLocation=s3://$BUCKET/code/glue_job.py"
 ARGS="{\"--bucket\":\"$BUCKET\",\"--additional-python-modules\":\"pandas==2.2.2,pyarrow==15.0.2,openpyxl==3.1.5\"}"
 if aws glue get-job --job-name "$JOB" >/dev/null 2>&1; then
-  aws glue update-job --job-name "$JOB" --job-update "Role=$ROLE,Command={$COMMAND},DefaultArguments=$ARGS,MaxCapacity=1.0"
+  UPDATE="{\"Role\":\"$ROLE\",\"Command\":{\"Name\":\"pythonshell\",\"PythonVersion\":\"3.9\",\"ScriptLocation\":\"s3://$BUCKET/code/glue_job.py\"},\"DefaultArguments\":$ARGS,\"MaxCapacity\":1.0}"
+  aws glue update-job --job-name "$JOB" --job-update "$UPDATE" >/dev/null
 else
   aws glue create-job --name "$JOB" --role "$ROLE" --command "$COMMAND" --default-arguments "$ARGS" --max-capacity 1.0
 fi
