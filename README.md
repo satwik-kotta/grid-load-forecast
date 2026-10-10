@@ -38,6 +38,44 @@ Harvey was cool and wet, and cool weather lowers August demand on its own. About
 
 ERCOT reports "hour ending" in Central time and the weather feed is UTC. `src/etl.py` aligns both on the UTC hour each interval starts, handles both daylight-saving edge cases, and checks that the eight zones sum to the ERCOT total.
 
+## AWS pipeline
+
+The same ETL also runs on AWS, so the cleaned data sits in S3 and can be queried with SQL instead of living on one laptop.
+
+```
+S3  raw/ercot/*.xlsx, raw/weather/*.csv
+      │
+Glue  Python shell job (aws/glue_job.py): same transform as src/etl.py,
+      │   then data-quality and time-alignment checks. If one fails the job stops and writes nothing.
+      ▼
+S3  curated/panel/zone=<Z>/year=<Y>/part.parquet        3 zones × 6 years, 135,756 rows
+    curated/ercot_zones/year=<Y>/part.parquet           all 8 zones plus the system total
+    curated/quality/report.json                         result of every check for that run
+      │
+Athena  external tables over the Parquet, a second set of checks in SQL, and a daily_peak view
+```
+
+**Checks before anything is written** (`src/quality.py`):
+
+| Check | What it guards against |
+|---|---|
+| Hourly series complete, no duplicates (ERCOT and each zone) | dropped or repeated hours |
+| No nulls; load, temperature and humidity in range | bad readings, failed joins |
+| Eight zones sum to the published ERCOT total within 1 MW | misread columns or files |
+| Local time equals UTC converted to Central | a wrong offset |
+| Local days have 24 hours, 23 only in March, 25 only in November | daylight-saving mistakes |
+| July and August load peaks in the local afternoon (97.7% of days) | load joined off the clock, which no row count would catch |
+
+Athena then repeats the completeness, null and zone-total checks on the tables themselves and confirms the panel matches the ERCOT table at every UTC hour (`aws/athena/02_quality_checks.sql`).
+
+```bash
+GLUE_ROLE_ARN=arn:aws:iam::<account>:role/<glue-role> ./aws/deploy.sh <bucket>
+```
+
+This uploads the raw files and code, creates the Glue job, runs it, creates the Athena tables and runs the SQL checks. Timestamps are written at millisecond precision because Athena cannot read pandas' default nanoseconds.
+
+`tests/test_aws.py` runs this path without an AWS account: S3 is mocked with moto, the Glue job runs end to end against it, and the Athena SQL is executed with DuckDB on the files the job wrote. The tests also corrupt the data four ways (a one-hour shift, a dropped hour, a broken zone total, load joined six hours late) and confirm the checks catch each one.
+
 ## Method
 
 **Forecast set-up.** Each day at 06:00 UTC (midnight Central standard time) forecast the next 24 hourly loads. Load is known up to the hour before. Train Oct 2012 to Jun 2016, validate Jul to Dec 2016, test Jan to Nov 2017.
@@ -81,8 +119,9 @@ open docs/index.html
 ## Layout
 
 ```
-src/        etl, features, forecast, causal, export_dashboard
-tests/      alignment, leakage, loss and event-study checks
+src/        etl, quality, features, forecast, causal, export_dashboard
+aws/        glue_job.py, deploy.sh, run_athena.py, athena/*.sql
+tests/      alignment, leakage, loss, event-study, data-quality and AWS pipeline checks
 artifacts/  forecast_metrics.json, forecasts.parquet, harvey_summary.json, harvey_event_study.csv
 docs/       dashboard
 data/       raw load and weather files, with sources
