@@ -69,7 +69,8 @@ Athena  external tables over the Parquet, a second set of checks in SQL, and a d
 Athena then repeats the completeness, null and zone-total checks on the tables themselves and confirms the panel matches the ERCOT table at every UTC hour (`aws/athena/02_quality_checks.sql`).
 
 ```bash
-GLUE_ROLE_ARN=arn:aws:iam::<account>:role/<glue-role> ./aws/deploy.sh <bucket>
+ROLE=$(./aws/setup_role.sh <bucket>)          # one-off: a Glue role limited to that bucket
+GLUE_ROLE_ARN=$ROLE ./aws/deploy.sh <bucket>
 ```
 
 This uploads the raw files and code, creates the Glue job, runs it, creates the Athena tables and runs the SQL checks. Timestamps are written at millisecond precision because Athena cannot read pandas' default nanoseconds.
